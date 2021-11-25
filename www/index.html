@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Upbeat</title>
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500" rel="stylesheet">
+  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous">
+</head>
+<body style="-webkit-app-region: drag">
+  <img src="assets/img/logo.png" alt="UpbeatRadio" width="150px" height="200px"/>
+  <div class="player">
+    <audio autoplay id="audio" src="http://live.upbeat.pw" preload="auto"></audio>
+    <span id="control"></span>
+  </div>
+  <div id="info">
+    <div id="title"></div>
+    <div id="artist"></div>
+  </div>
+  <i onclick="copy()" class="fas fa-copy"></i>
+  <p class="message">Copied to clipboard!</p>
+  <script>
+    const audio = document.getElementById("audio");
+    const control = document.getElementById("control");
+    const iframe = document.getElementById("info");
+    let currentSong;
+
+    const playButton = '<i class="fas fa-play"></i>';
+    const pauseButton = '<i class="fas fa-pause"></i>';
+
+    isDifferentSong = async () => {
+      return currentSong !== await getCurrentSong();
+    }
+
+    getCurrentSong = async () => {
+      const res = await fetch("https://upbeatradio.net/api/v1/stats");
+      const json = await res.json();
+      console.log(json);
+      document.getElementById("title").innerHTML = json.song.title;
+      document.getElementById("artist").innerHTML = json.song.artist;
+      return json.song.title;
+    }
+
+    getCurrentSong();
+     
+    window.onload = function() {
+      changeButton();
+      currentSong = getCurrentSong();
+      
+      setInterval(() => {
+        if (isDifferentSong()) {
+          currentSong = getCurrentSong();
+          new window.Notification('Upbeatradio', {
+            body: currentSong
+          });
+        }
+      }, 30000);
+
+    };
+
+    control.onclick = function(e) {
+      e.preventDefault();
+      audio.muted ? audio.muted = false : audio.muted = true;
+      changeButton();
+    };
+
+    changeButton = () => {
+      if (audio.muted) {
+        control.innerHTML = playButton;
+      } else {
+        control.innerHTML = pauseButton;
+      }
+    }
+
+    copy = () => {
+      const text = document.getElementById("title").innerText;
+      copyToClipboard(text.replace(/(\r\n\t|\n|\r\t)/gm," "));
+      const message = document.getElementsByClassName('message')[0];
+      message.style.opacity = 1;
+      setTimeout(() => {
+        message.style.opacity = 0;
+      }, 1000);
+    }
+
+    copyToClipboard = (text) => {
+      const dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute('value', text);
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    }
+  </script>
+</body>
+</html>
